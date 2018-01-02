@@ -6,6 +6,8 @@
 #include "Components/ActorComponent.h"
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
+#include "CollisionQueryParams.h"
+#include "GameFramework/Actor.h"
 #include "Grabber.generated.h"
 
 
