@@ -4,9 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Components/InputComponent.h"
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
 #include "CollisionQueryParams.h"
+#include "PhysicsEngine/PhysicsHandleComponent.h"
 #include "GameFramework/Actor.h"
 #include "Grabber.generated.h"
 
@@ -31,5 +33,11 @@ public:
 private:
 	//How far player can reach in cm
 	const float Rach = 100.0f;
+
+	UPhysicsHandleComponent* PhysicsHadle = nullptr;
 	
+	UInputComponent* PawnInput = nullptr;
+
+	//Rey-cast and grab what's in reach
+	void Grab();
 };
