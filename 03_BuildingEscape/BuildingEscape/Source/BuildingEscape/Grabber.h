@@ -26,6 +26,7 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
+
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -38,9 +39,18 @@ private:
 	
 	UInputComponent* PawnInput = nullptr;
 
+	//Find (assumed) attached physics handle
+	void FindPhysicsHandleComponent();
+
+	//Setup (assumed) attached Input Component
+	void SetupInputComponent();
+
 	//Rey-cast and grab what's in reach
 	void Grab();
 
 	//Release grabbed object
 	void Release();
+
+	//Return hit for first physic body in reach
+	FHitResult GetFirstPhysicBodyInReach() const;
 };

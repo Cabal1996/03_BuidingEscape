@@ -23,6 +23,14 @@ void UGrabber::BeginPlay()
 	UE_LOG(LogTemp, Warning, TEXT("Grabber on %s is reporting for duty!"), *GetOwner()->GetName());
 
 	///Look for attached Physics Handle
+	FindPhysicsHandleComponent();
+
+	///Look for attached Input Component
+	SetupInputComponent();
+}
+
+void UGrabber::FindPhysicsHandleComponent()
+{
 	PhysicsHadle = GetOwner()->FindComponentByClass<UPhysicsHandleComponent>();
 	if (PhysicsHadle)
 	{
@@ -32,8 +40,10 @@ void UGrabber::BeginPlay()
 	{
 		UE_LOG(LogTemp, Error, TEXT("%s has no Physics Handel Component attached"), *GetOwner()->GetName());
 	}
+}
 
-	///Look for attached Input Component
+void UGrabber::SetupInputComponent()
+{
 	PawnInput = GetOwner()->FindComponentByClass<UInputComponent>();
 	if (PawnInput)
 	{
@@ -51,38 +61,29 @@ void UGrabber::BeginPlay()
 void UGrabber::Grab()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Grab pressed"));
+
+	//LINE TRACE and see if we reach any actor with physics body collision channel set
+	GetFirstPhysicBodyInReach();
+
+	//if we hit something then attach a physics handle
+	//TODO attach physics handle
 }
 
 void UGrabber::Release()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Grab released"));
+
+	//TODO release physics handle
 }
 
-// Called every frame
-void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+FHitResult UGrabber::GetFirstPhysicBodyInReach() const
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// ...
-
 	///Get player view this tick
 	FVector PlayerViewPointLocation;
 	FRotator PlayerViewPointRotation;
 	GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(OUT PlayerViewPointLocation, OUT PlayerViewPointRotation);
 	FVector LineTraceEnd = PlayerViewPointLocation + PlayerViewPointRotation.Vector() * Rach;
-	
-	/*
-	//test output
-	FString Loaction = PlayerViewPointLocation.ToString();
-	FString Rotation = PlayerViewPointRotation.ToString();
-	UE_LOG(LogTemp, Warning, TEXT("Player Location is: %s ; Player rotation is: %s"), *Loaction, *Rotation);
-	*/
-	
 
-	///Draw a rad trace in the world to visualize
-	DrawDebugLine(
-		GetWorld(), PlayerViewPointLocation, LineTraceEnd, FColor(255, 0, 0), false, 0.0f, 0.0f, 5.0f
-		);
 
 	///Setup query parameters
 	FCollisionQueryParams TraceParameters(FName(TEXT("")), false, GetOwner());
@@ -105,7 +106,20 @@ void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompone
 		UE_LOG(LogTemp, Warning, TEXT("Hit at: %s"), *ActorHit->GetName());
 	}
 
+	return FHitResult();
+}
 
+// Called every frame
+void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	// ...
+
+	//if the physics is attached
+		//move the object we are holding
+
+	
 }
 
 
