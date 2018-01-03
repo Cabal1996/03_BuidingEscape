@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Components/PrimitiveComponent.h"
 #include "Engine/TriggerVolume.h"
 #include "Engine/World.h"
 #include "OpenDoor.generated.h"
@@ -40,9 +41,8 @@ private:
 	float DoorCloseDelay = 1.0f;
 
 	float LastDoorOpenTime;
-
 	float StartingYawPos;
-
-	AActor* ActorThatOpens; // Remember pawn inherits from actor
 	AActor *Owner; // The owning door
+
+	float GetTotalMassOfActorsOnPlate();
 };

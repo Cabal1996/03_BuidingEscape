@@ -13,7 +13,6 @@ UGrabber::UGrabber()
 	// ...
 }
 
-
 // Called when the game starts
 void UGrabber::BeginPlay()
 {
@@ -60,19 +59,17 @@ void UGrabber::Grab()
 	if (ActorHit)
 	{
 		//attach physics handle
-		PhysicsHadle->GrabComponent(
+		PhysicsHadle->GrabComponentAtLocationWithRotation(
 			ComponentToGrab,
 			NAME_None, // no bone required
 			ComponentToGrab->GetOwner()->GetActorLocation(),
-			true //allow rotation
+			ComponentToGrab->GetOwner()->GetActorRotation()
 		);
 	}
 }
 
 void UGrabber::Release()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Grab released"));
-
 	//release physics handle
 	PhysicsHadle->ReleaseComponent();
 }
@@ -122,5 +119,3 @@ void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompone
 		PhysicsHadle->SetTargetLocation(GetReachLineEnd());
 	}
 }
-
-
