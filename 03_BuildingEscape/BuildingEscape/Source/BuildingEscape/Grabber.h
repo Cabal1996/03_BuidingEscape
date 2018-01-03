@@ -53,5 +53,11 @@ private:
 	void Release();
 
 	//Return hit for first physic body in reach
-	FHitResult GetFirstPhysicBodyInReach() const;
+	FHitResult GetFirstPhysicBodyInReach();
+
+	//Get player reach start location
+	FVector GetReachLineStart();
+
+	//Get player reach end location
+	FVector GetReachLineEnd();
 };

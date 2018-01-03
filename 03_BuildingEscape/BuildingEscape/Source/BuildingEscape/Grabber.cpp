@@ -19,24 +19,17 @@ void UGrabber::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
-	UE_LOG(LogTemp, Warning, TEXT("Grabber on %s is reporting for duty!"), *GetOwner()->GetName());
-
-	///Look for attached Physics Handle
+	//Look for attached Physics Handle
 	FindPhysicsHandleComponent();
 
-	///Look for attached Input Component
+	//Look for attached Input Component
 	SetupInputComponent();
 }
 
 void UGrabber::FindPhysicsHandleComponent()
 {
 	PhysicsHadle = GetOwner()->FindComponentByClass<UPhysicsHandleComponent>();
-	if (PhysicsHadle)
-	{
-
-	}
-	else
+	if (PhysicsHadle == nullptr)
 	{
 		UE_LOG(LogTemp, Error, TEXT("%s has no Physics Handel Component attached"), *GetOwner()->GetName());
 	}
@@ -47,8 +40,6 @@ void UGrabber::SetupInputComponent()
 	PawnInput = GetOwner()->FindComponentByClass<UInputComponent>();
 	if (PawnInput)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Input Component found"));
-		///Bind the input axis
 		PawnInput->BindAction("Grab", IE_Pressed, this, &UGrabber::Grab);
 		PawnInput->BindAction("Grab", IE_Released, this, &UGrabber::Release);
 	}
@@ -60,8 +51,6 @@ void UGrabber::SetupInputComponent()
 
 void UGrabber::Grab()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Grab pressed"));
-
 	//LINE TRACE and see if we reach any actor with physics body collision channel set
 	auto HitResault = GetFirstPhysicBodyInReach();
 	auto ComponentToGrab = HitResault.GetComponent();
@@ -73,7 +62,7 @@ void UGrabber::Grab()
 		//attach physics handle
 		PhysicsHadle->GrabComponent(
 			ComponentToGrab,
-			NAME_None,
+			NAME_None, // no bone required
 			ComponentToGrab->GetOwner()->GetActorLocation(),
 			true //allow rotation
 		);
@@ -88,37 +77,37 @@ void UGrabber::Release()
 	PhysicsHadle->ReleaseComponent();
 }
 
-FHitResult UGrabber::GetFirstPhysicBodyInReach() const
+FHitResult UGrabber::GetFirstPhysicBodyInReach()
 {
-	///Get player view this tick
-	FVector PlayerViewPointLocation;
-	FRotator PlayerViewPointRotation;
-	GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(OUT PlayerViewPointLocation, OUT PlayerViewPointRotation);
-	FVector LineTraceEnd = PlayerViewPointLocation + PlayerViewPointRotation.Vector() * Rach;
-
-
-	///Setup query parameters
+	//Setup query parameters
 	FCollisionQueryParams TraceParameters(FName(TEXT("")), false, GetOwner());
 
 	///Line-Trace (Ray-cast) out to reach distance
-	FHitResult Hit;
+	FHitResult HitResault;
 	GetWorld()->LineTraceSingleByObjectType(
-		OUT Hit,
-		PlayerViewPointLocation,
-		LineTraceEnd,
+		OUT HitResault,
+		GetReachLineStart(),
+		GetReachLineEnd(),
 		FCollisionObjectQueryParams(ECollisionChannel::ECC_PhysicsBody),
 		TraceParameters
 	);
+	return HitResault;
+}
 
-	///See what we hit
-	AActor* ActorHit = Hit.GetActor();
+FVector UGrabber::GetReachLineStart()
+{
+	FVector PlayerViewPointLocation;
+	FRotator PlayerViewPointRotation;
+	GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(OUT PlayerViewPointLocation, OUT PlayerViewPointRotation);
+	return PlayerViewPointLocation;
+}
 
-	if (ActorHit)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Hit at: %s"), *ActorHit->GetName());
-	}
-
-	return Hit;
+FVector UGrabber::GetReachLineEnd()
+{
+	FVector PlayerViewPointLocation;
+	FRotator PlayerViewPointRotation;
+	GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(OUT PlayerViewPointLocation, OUT PlayerViewPointRotation);
+	return PlayerViewPointLocation + PlayerViewPointRotation.Vector() * Rach;
 }
 
 // Called every frame
@@ -126,23 +115,12 @@ void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompone
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	// ...
-
-	///Get player view this tick
-	FVector PlayerViewPointLocation;
-	FRotator PlayerViewPointRotation;
-	GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(OUT PlayerViewPointLocation, OUT PlayerViewPointRotation);
-	FVector LineTraceEnd = PlayerViewPointLocation + PlayerViewPointRotation.Vector() * Rach;
-
 	//if the physics is attached
 	if (PhysicsHadle->GetGrabbedComponent())
 	{
 		//move the object we are holding
-		PhysicsHadle->SetTargetLocation(LineTraceEnd);
+		PhysicsHadle->SetTargetLocation(GetReachLineEnd());
 	}
-		
-
-	
 }
 
 
