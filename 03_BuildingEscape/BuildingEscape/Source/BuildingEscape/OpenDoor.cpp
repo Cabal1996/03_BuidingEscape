@@ -23,19 +23,30 @@ void UOpenDoor::BeginPlay()
 
 	//Find the owner Actor
 	Owner = GetOwner();
+	if (!Owner)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Can't assign Owner ptr!!!"));
+		return;
+	}
 
 	//Defining start yaw position of closed door 
 	StartingYawPos = Owner->GetActorRotation().Yaw;
+	if (!PressurePlate)
+	{
+		UE_LOG(LogTemp, Error, TEXT("PressurePlate not assign to %s"), *Owner->GetName());
+	}
 }
 
 void UOpenDoor::OpenDoor()
 {
+	if (!Owner) { return; }
 	//Set the door rotation     //Create a rotator
 	Owner->SetActorRotation(FRotator(0.0f, (StartingYawPos + OpenAngle), 0.0f));
 }
 
 void UOpenDoor::CloseDoor()
 {
+	if (!Owner) { return; }
 	//Set the door rotation     //Create a rotator
 	Owner->SetActorRotation(FRotator(0.0f, StartingYawPos, 0.0f));
 }
@@ -69,8 +80,10 @@ float UOpenDoor::GetTotalMassOfActorsOnPlate()
 
 	//Find all the overlapping actors
 	TArray<AActor*> OverlappingActors;
-	PressurePlate->GetOverlappingActors(OUT OverlappingActors);
 
+	if (!PressurePlate) { return 0.0f; }
+	PressurePlate->GetOverlappingActors(OUT OverlappingActors);
+	
 	//Iterate through them adding their masses
 	for (const auto* Actor : OverlappingActors)
 	{
