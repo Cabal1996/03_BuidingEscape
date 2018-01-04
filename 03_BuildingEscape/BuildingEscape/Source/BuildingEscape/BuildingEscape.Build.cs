@@ -15,9 +15,6 @@ public class BuildingEscape : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 
-
-        MinFilesUsingPrecompiledHeaderOverride = 1;
-        bFasterWithoutUnity = true;
         // Uncomment if you are using Slate UI
         // PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
 
