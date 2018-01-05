@@ -21,6 +21,12 @@ void UOpenDoor::BeginPlay()
 {
 	Super::BeginPlay();
 
+	Init();
+	SetupInputComponent();
+}
+
+void UOpenDoor::Init()
+{
 	//Find the MyPown Actor
 	MyPown = GetWorld()->GetFirstPlayerController()->GetPawn();
 	if (!MyPown)
@@ -35,66 +41,19 @@ void UOpenDoor::BeginPlay()
 		UE_LOG(LogTemp, Error, TEXT("Can't assign Owner ptr!!!"));
 	}
 	//Checking for Pressure Plate attached to the door
+
 	if (!MyTriggerVolume)
 	{
-		UE_LOG(LogTemp, Error, TEXT("PressurePlate not assign to %s"), *Owner->GetName());
+		UE_LOG(LogTemp, Error, TEXT("Trigger Volume not assign to %s"), *Owner->GetName());
 	}
 
-	SetupInputComponent();
-}
-
-// Called every frame
-void UOpenDoor::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	if (OpenByHand)
+	if (TypeOfDoor == ETypeOfDoor::OpenBySpecilObject)
 	{
-
-	}
-	else if(OpenByTriggerMass)
-	{
-		//Poll the Trigger Volume
-		//if ActorThatOpens is in the Volume
-		if (GetTotalMassOfActorsOnPlate() > TrigerMass) // TODO make into parameter
+		if (!SpecialObject)
 		{
-			OnOpenRequest.Broadcast();
-		}
-		else
-		{
-			OnCloseRequest.Broadcast();
+			UE_LOG(LogTemp, Error, TEXT("Special Object not assign to %s"), *Owner->GetName());
 		}
 	}
-	else if(OpenBySpecilObject)
-	{
-		if (MyTriggerVolume->IsOverlappingActor(SpecialObject))
-		{
-			OnOpenRequest.Broadcast();
-		}
-		else
-		{
-			OnCloseRequest.Broadcast();
-		}
-	}
-}
-
-float UOpenDoor::GetTotalMassOfActorsOnPlate()
-{
-	float TotalMass = 0.0f;
-
-	//Find all the overlapping actors
-	TArray<AActor*> OverlappingActors;
-
-	if (!MyTriggerVolume) { return 0.0f; }
-	MyTriggerVolume->GetOverlappingActors(OUT OverlappingActors);
-	
-	//Iterate through them adding their masses
-	for (const auto* Actor : OverlappingActors)
-	{
-		TotalMass += Actor->FindComponentByClass<UPrimitiveComponent>()->GetMass();
-	}
-
-	return TotalMass;
 }
 
 void UOpenDoor::SetupInputComponent()
@@ -111,22 +70,103 @@ void UOpenDoor::SetupInputComponent()
 	}
 }
 
+// Called every frame
+void UOpenDoor::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+
+	if (TypeOfDoor == ETypeOfDoor::OpenByTriggerMass)
+	{
+		MassTrigger();
+	}
+	if (TypeOfDoor == ETypeOfDoor::OpenBySpecilObject)
+	{
+		SpecaialObgectTrigger();
+	}
+}
+
+//Trigger Door Open/Close by Left Mouse Button of player
 void UOpenDoor::Interact()
 {
-	if (!MyTriggerVolume) { return; }
-	if (!MyPown) { return; }
-	if (MyTriggerVolume->IsOverlappingActor(MyPown))
+	if (TypeOfDoor == ETypeOfDoor::OpenByHand)
 	{
-		if (!DoorIsOpen)
+		if (!MyTriggerVolume) { return; }
+		if (!MyPown) { return; }
+		if (MyTriggerVolume->IsOverlappingActor(MyPown))
 		{
-			OnOpenRequest.Broadcast();
-			DoorIsOpen = true;
-		}
-		else
-		{
-			OnCloseRequest.Broadcast();
-			DoorIsOpen = false;
+			DoorAct(!BDoorIsOpen);
 		}
 	}
-	
+}
+
+// Trigger Door Open/Close by Mass in trigger volume
+void UOpenDoor::MassTrigger()
+{
+
+	if (GetTotalMassOfActorsOnPlate() > TrigerMass)
+	{
+		DoorAct(true);
+	}
+	else
+	{
+		DoorAct(false);
+	}
+}
+
+float UOpenDoor::GetTotalMassOfActorsOnPlate()
+{
+	float TotalMass = 0.0f;
+
+	//Find all the overlapping actors
+	TArray<AActor*> OverlappingActors;
+
+	if (!MyTriggerVolume) { return 0.0f; }
+	MyTriggerVolume->GetOverlappingActors(OUT OverlappingActors);
+
+	//Iterate through them adding their masses
+	for (const auto* Actor : OverlappingActors)
+	{
+		TotalMass += Actor->FindComponentByClass<UPrimitiveComponent>()->GetMass();
+	}
+
+	return TotalMass;
+}
+
+// Trigger Door Open/Close by special object overlaps trigger volume
+void UOpenDoor::SpecaialObgectTrigger()
+{
+	if (!MyTriggerVolume) { return; }
+	if (!SpecialObject) { return; }
+	if (MyTriggerVolume->IsOverlappingActor(SpecialObject))
+	{
+		DoorAct(true);
+	}
+	else
+	{
+		DoorAct(false);
+	}
+}
+
+//Force door to act
+//open on "TRUE" close on "FALSE"
+void UOpenDoor::DoorAct(bool BOpenClose)
+{
+	if (BOpenClose)
+	{
+		if (!BDoorIsOpen)
+		{
+			OnOpenRequest.Broadcast();//Broadcasting element to blueprint
+			BDoorIsOpen = true;
+		}
+	}
+	else
+	{
+		if (BDoorIsOpen)
+		{
+			OnCloseRequest.Broadcast();//Broadcasting element to blueprint
+			BDoorIsOpen = false;
+		}
+
+	}
 }

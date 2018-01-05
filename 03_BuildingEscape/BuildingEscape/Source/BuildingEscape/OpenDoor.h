@@ -13,6 +13,15 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDoorEvent);
 
+UENUM()
+enum class ETypeOfDoor
+{
+	OpenByHand,
+	OpenByTriggerMass,
+	OpenBySpecilObject,
+
+};
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class BUILDINGESCAPE_API UOpenDoor : public UActorComponent
 {
@@ -39,33 +48,31 @@ public:
 private:
 
 	UInputComponent * PawnInput = nullptr;
+
+	UPROPERTY(EditAnywhere)
+	ETypeOfDoor TypeOfDoor = ETypeOfDoor::OpenByHand;
 	
 	UPROPERTY(EditAnywhere)
 	ATriggerVolume* MyTriggerVolume = nullptr;
 
 	UPROPERTY(EditAnywhere)
-	bool OpenByHand = true;
-
-	UPROPERTY(EditAnywhere)
-	bool OpenByTriggerMass = false;
-
-	UPROPERTY(EditAnywhere)
 	float TrigerMass = 30.0f;
-
-	UPROPERTY(EditAnywhere)
-	bool OpenBySpecilObject = false;
 
 	UPROPERTY(EditAnywhere)
 	AActor* SpecialObject = nullptr;
 
-	bool DoorIsOpen = false;
+	bool BDoorIsOpen = false;
 
 	AActor *Owner = nullptr; // The owning door
 
 	AActor *MyPown = nullptr;
 
+	void Init();
 	void SetupInputComponent();
 	void Interact();
+	void MassTrigger();
+	void SpecaialObgectTrigger();
+	void DoorAct(bool);
 
 	float GetTotalMassOfActorsOnPlate();
 
