@@ -21,18 +21,26 @@ void UOpenDoor::BeginPlay()
 {
 	Super::BeginPlay();
 
+	//Find the MyPown Actor
+	MyPown = GetWorld()->GetFirstPlayerController()->GetPawn();
+	if (!MyPown)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Can't assign MyPown ptr!!!"));
+	}
+
 	//Find the owner Actor
 	Owner = GetOwner();
 	if (!Owner)
 	{
 		UE_LOG(LogTemp, Error, TEXT("Can't assign Owner ptr!!!"));
-		return;
 	}
 	//Checking for Pressure Plate attached to the door
-	if (!PressurePlate)
+	if (!MyTriggerVolume)
 	{
 		UE_LOG(LogTemp, Error, TEXT("PressurePlate not assign to %s"), *Owner->GetName());
 	}
+
+	SetupInputComponent();
 }
 
 // Called every frame
@@ -40,15 +48,33 @@ void UOpenDoor::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompon
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	//Poll the Trigger Volume
-	//if ActorThatOpens is in the Volume
-	if (GetTotalMassOfActorsOnPlate() > TrigerMass) // TODO make into parameter
+	if (OpenByHand)
 	{
-		OnOpenRequest.Broadcast();
+
 	}
-	else
+	else if(OpenByTriggerMass)
 	{
-		OnCloseRequest.Broadcast();
+		//Poll the Trigger Volume
+		//if ActorThatOpens is in the Volume
+		if (GetTotalMassOfActorsOnPlate() > TrigerMass) // TODO make into parameter
+		{
+			OnOpenRequest.Broadcast();
+		}
+		else
+		{
+			OnCloseRequest.Broadcast();
+		}
+	}
+	else if(OpenBySpecilObject)
+	{
+		if (MyTriggerVolume->IsOverlappingActor(SpecialObject))
+		{
+			OnOpenRequest.Broadcast();
+		}
+		else
+		{
+			OnCloseRequest.Broadcast();
+		}
 	}
 }
 
@@ -59,8 +85,8 @@ float UOpenDoor::GetTotalMassOfActorsOnPlate()
 	//Find all the overlapping actors
 	TArray<AActor*> OverlappingActors;
 
-	if (!PressurePlate) { return 0.0f; }
-	PressurePlate->GetOverlappingActors(OUT OverlappingActors);
+	if (!MyTriggerVolume) { return 0.0f; }
+	MyTriggerVolume->GetOverlappingActors(OUT OverlappingActors);
 	
 	//Iterate through them adding their masses
 	for (const auto* Actor : OverlappingActors)
@@ -69,4 +95,38 @@ float UOpenDoor::GetTotalMassOfActorsOnPlate()
 	}
 
 	return TotalMass;
+}
+
+void UOpenDoor::SetupInputComponent()
+{
+	if (!MyPown) { return; }
+	PawnInput = MyPown->FindComponentByClass<UInputComponent>();
+	if (PawnInput)
+	{
+		PawnInput->BindAction("Interact", IE_Pressed, this, &UOpenDoor::Interact);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s has no Input Component attached"), *GetOwner()->GetName());
+	}
+}
+
+void UOpenDoor::Interact()
+{
+	if (!MyTriggerVolume) { return; }
+	if (!MyPown) { return; }
+	if (MyTriggerVolume->IsOverlappingActor(MyPown))
+	{
+		if (!DoorIsOpen)
+		{
+			OnOpenRequest.Broadcast();
+			DoorIsOpen = true;
+		}
+		else
+		{
+			OnCloseRequest.Broadcast();
+			DoorIsOpen = false;
+		}
+	}
+	
 }

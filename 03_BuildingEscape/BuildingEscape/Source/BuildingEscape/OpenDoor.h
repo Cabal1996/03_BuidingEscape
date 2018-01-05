@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Components/InputComponent.h"
 #include "Components/PrimitiveComponent.h"
 #include "Runtime/Core/Public/Delegates/Delegate.h"
 #include "Engine/TriggerVolume.h"
@@ -36,14 +37,36 @@ public:
 	FDoorEvent OnCloseRequest;
 
 private:
+
+	UInputComponent * PawnInput = nullptr;
 	
 	UPROPERTY(EditAnywhere)
-	ATriggerVolume* PressurePlate = nullptr;
+	ATriggerVolume* MyTriggerVolume = nullptr;
+
+	UPROPERTY(EditAnywhere)
+	bool OpenByHand = true;
+
+	UPROPERTY(EditAnywhere)
+	bool OpenByTriggerMass = false;
 
 	UPROPERTY(EditAnywhere)
 	float TrigerMass = 30.0f;
 
+	UPROPERTY(EditAnywhere)
+	bool OpenBySpecilObject = false;
+
+	UPROPERTY(EditAnywhere)
+	AActor* SpecialObject = nullptr;
+
+	bool DoorIsOpen = false;
+
 	AActor *Owner = nullptr; // The owning door
 
+	AActor *MyPown = nullptr;
+
+	void SetupInputComponent();
+	void Interact();
+
 	float GetTotalMassOfActorsOnPlate();
+
 };
